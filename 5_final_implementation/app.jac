@@ -1,11 +1,11 @@
 import:py json;
 import:py random;
-import:py from mtllm.llms, OpenAI;
+import:py from mtllm.llms, Groq;
 import:jac gui;
 import:jac from rag, rag_engine;
 
-glob llm1 = OpenAI(model_name='gpt-3.5-turbo');
-glob llm2 = OpenAI(model_name='gpt-4');
+glob llm1 = Groq(model_name = "llama3-8b-8192");
+glob llm2 = Groq(model_name = "llama3-8b-8192");
 
 glob RagEngine:rag_engine = rag_engine();
 

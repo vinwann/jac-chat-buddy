@@ -1,16 +1,10 @@
 import:py random;
 import:py uuid;
 import:py re;
-import:py streamlit as st;
 import:py from mtllm.llms, Groq;
+import:jac gui;
 
 glob llm = Groq(model_name = "llama3-8b-8192");
-
-
-
-    
-
-
 
 node user{
     has user_name:string="user";
@@ -20,7 +14,8 @@ walker query {
     #can go_to_router with session entry;
     has session_id : string =  '';
     has inquiry_by_user: string = '';
-    has user_query : list=[]; 
+    has user_query : dict={"role":'',
+                            "content":''}; 
     has user_data: 'data about the health status of the user' :dict={};
     has todo_list: 'The tasks to be done by the user in the future.' :list=[];
 
@@ -107,9 +102,11 @@ node user_TODO{
 
 
 
-with entry {
-        st.title("Assitant");
-        create_graph(   user_data={ "age": 20,
+can main {
+    
+    gui.main();
+
+    create_graph(   user_data={ "age": 20,
                                     "Pressure": (120, 80),
                                     "Married": False
                                 },
@@ -117,9 +114,15 @@ with entry {
                                     "Buy Bread",
                                     "Have pizza for dinner"]
                     ) spawn root;
-        
-    }
+    
 
+}
 
+#with entry {
+#    if __name__ == "__main__"{
+#        main();
+#    }
+    
+#}
     
     

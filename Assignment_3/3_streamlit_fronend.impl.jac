@@ -7,38 +7,40 @@
 :node:user_QA:can:print_output{
     #print("At QA");
     self.answer = self.chat_llm(user_data=here.user_data,query=here.inquiry_by_user);
-    with st.chat_message("assistant"){
-        stream = st.write(self.answer);
-    }
+    gui.display_response(self.answer);
     print(self.answer);
-    here.user_query.append(self.answer);
+    here.user_query["role"] = "assistant";
+    here.user_query["content"] = self.answer;
     visit [<--];
 }
 :node:user_TODO:can:print_output{
     #print("At TODO");
     self.answer = self.chat_llm(todo_list=here.todo_list,query=here.inquiry_by_user);
-    with st.chat_message("assistant"){
-        stream = st.write(self.answer);
-    }
+    gui.display_response(self.answer);
     print(self.answer);
     here.user_query.append(self.answer);
     visit [<--];
     
 }
 :node:session:can:send_query_to_router{
-    print("here");
-    here.inquiry_by_user = st.chat_input("What is up?",key = self.session_id);
-    if (here.inquiry_by_user) {
+    #print("here");
+    #here.inquiry_by_user = st.chat_input("What is up?",key = self.session_id);
+    
+    gui.check_new_message(query_walker=here);
+    print(here.inquiry_by_user);
+    if (len(here.inquiry_by_user) > 0)
+    {
+        print(self.session_id);
         if here.session_id == self.session_id{
             self.chat_history.append(here.user_query);
-            here.user_query = [];  
+            here.user_query ={"role":'',
+                                "content":''};  
             #here.inquiry_by_user = input('What else can I help you with : ');#st.chat_input("What is up?");#
         }
         else{
             here.session_id = self.session_id;
             here.user_data =self.user_data;
             here.todo_list = self.todo_list;
-            here.inquiry_by_user = prompt;
             #here.inquiry_by_user = input('How can I help you : ');#st.chat_input("What is up?");#input('How can I help you : ');
             #here.user_query.append(here.inquiry_by_user);
             end = self;
@@ -47,20 +49,19 @@
             end ++> user_QA();
             end ++> user_TODO();
             #visit [-->];
-              
+                
         } 
-        #here.inquiry_by_user = prompt;
-        here.user_query.append(here.inquiry_by_user);
-        with st.chat_message("user"){
-            st.markdown(here.inquiry_by_user);
-        }
+
+        self.chat_history.append({"role":"user","content" : here.inquiry_by_user});
         if here.inquiry_by_user != "x"{
             visit [-->];
         }
         else{
+            print("going out!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             self.end_seesion();
-        }  
+        }
     }  
+    
 }
 
 :node:session:can:end_seesion{
@@ -71,7 +72,7 @@
     file.close();
 }
 :node:router:can:direct{
-    if (len(here.user_query)<2)
+    if (len(here.user_query["content"])<1)
     {
         self.match = re.search(r'(@\w+)\s(.*)', here.inquiry_by_user);
         if (self.match){
@@ -93,7 +94,7 @@
         }
         else
         {
-            print("Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA");
+            gui.display_response("Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA");
             visit [<--];
         }
     }
