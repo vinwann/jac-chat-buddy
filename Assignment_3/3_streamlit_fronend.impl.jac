@@ -18,7 +18,8 @@
     self.answer = self.chat_llm(todo_list=here.todo_list,query=here.inquiry_by_user);
     gui.display_response(self.answer);
     print(self.answer);
-    here.user_query.append(self.answer);
+    here.user_query["role"] = "assistant";
+    here.user_query["content"] = self.answer;
     visit [<--];
     
 }
