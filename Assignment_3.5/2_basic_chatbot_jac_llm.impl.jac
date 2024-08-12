@@ -1,89 +1,62 @@
 :node:RAG:can:print_output{
     #print("At RAG");
     here.inquiry_by_user = '';
-    here.query_state = True;
     visit [<--];
 }
 
 :node:user_QA:can:print_output{
     #print("At QA");
     self.answer = self.chat_llm(user_data=here.user_data,query=here.inquiry_by_user);
-    gui.display_response(self.answer);
     print(self.answer);
-    here.user_query["role"] = "assistant";
-    here.user_query["content"] = self.answer;
-
-    #file = open(here.chat_file_name+str(here.session_id)+'.json', 'a');
-    #json.dump(here.user_query, file, indent=4);
-    #file.close();
-    here.inquiry_by_user = '';
-    here.query_state = True;
+    here.user_query.append(self.answer);
     visit [<--];
 }
 :node:user_TODO:can:print_output{
     #print("At TODO");
     self.answer = self.chat_llm(todo_list=here.todo_list,query=here.inquiry_by_user);
-    gui.display_response(self.answer);
     print(self.answer);
-    here.user_query["role"] = "assistant";
-    here.user_query["content"] = self.answer;
-
-    #file = open(here.chat_file_name+str(here.session_id)+'.json', 'a');
-    #json.dump(here.user_query, file, indent=4);
-    #file.close();
-    here.inquiry_by_user = '';
-    here.query_state = True;
+    here.user_query.append(self.answer);
     visit [<--];
     
 }
 :node:session:can:send_query_to_router{
-
-    if (here.just_init){
-        here.just_init = False;
-        gui.chat_interface(here,self);
+    if here.session_id == self.session_id{
+        self.chat_history.append(here.user_query);
+        here.user_query = [];
+        here.inquiry_by_user = input('What else can I help you with : ');
+        here.user_query.append(here.inquiry_by_user);
+        if here.inquiry_by_user != "x"{
+        visit [-->](`?router);
+        }
+        else{
+           self.end_seesion();
+        }
+    }
+    else{
+        print(here);
+        print(self);
         here.session_id = self.session_id;
         here.user_data =self.user_data;
         here.todo_list = self.todo_list;
-        here.chat_history = [];
+        here.inquiry_by_user = input('How can I help you : ');
+        here.user_query.append(here.inquiry_by_user);
+        visit [-->](`?router);
         
     }
-    if (here.query_state == 0)
-    {
-        print(here.inquiry_by_user);
-        print(self.chat_history);
-        if (len(here.inquiry_by_user) > 0)
-        {
-            print(self.session_id);
-            #file = open(here.chat_file_name+str(here.session_id)+'.json', 'a');
-            #json.dump({"role":"user","content" : here.inquiry_by_user}, file, indent=4);
-            #file.close();
-            self.chat_history.append({"role":"user","content" : here.inquiry_by_user});
-            if here.inquiry_by_user != "x"{
-                visit [-->];
-            }
-            else{
-                print("going out!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                self.end_seesion();
-            }
-        } 
-        here.query_state  = 1;
-    }
-    elif (here.query_state == 1){
-        self.chat_history.append(here.user_query);
-        here.query_state  = 2;
-    } 
     
 }
 
 :node:session:can:end_seesion{
-    file = open(here.chat_file_name+str(here.session_id)+".txt", 'a');
+    file = open(self.chat_file_name+str(self.session_id)+".txt", 'w');
     for i in self.chat_history{
         file.write(i[0]+":"+i[1] + '\n');
     }
     file.close();
+
 }
 :node:router:can:direct{
-    if (len(here.inquiry_by_user)>0)
+    print("hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+    if (len(here.user_query) > 0 )
     {
         self.match = re.search(r'(@\w+)\s(.*)', here.inquiry_by_user);
         if (self.match){
@@ -105,26 +78,16 @@
         }
         else
         {
-            gui.display_response("Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA");
-            here.user_query["role"] = "assistant";
-            here.user_query["content"] = "Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA";
-            
-            #file = open(here.chat_file_name+str(here.session_id)+'.json', 'a');
-            #json.dump(here.user_query, file, indent=4);
-            #file.close();
-            here.inquiry_by_user = '';
-            here.query_state = True;
+            print("Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA");
             visit [<--];
         }
     }
     else{
-        here.query_state = True;
         visit [<--];
     }    
 }
 
 :walker:create_graph:can:generate_graph{
-    print("hereee");
     end = here; # Assign the current root node (here) to end
     end ++> (end := user()); # Create a user node and connect it to the end node. Assign the new user node to the end.
     end ++> data(user_data = self.user_data); # Create a data node with the user data and connect it to the end node.
@@ -133,8 +96,7 @@
 }
 
 :walker:chat:can:create_session{
-    print(self.new_chat);
-    if (self.new_chat)
+    if (input("Start new chat (y/n)?") == "y")
     {
         # Telescope into the nodes connected to the user node without walking.
         data_node = [-->](`?data)[0]; # Getting the data node filtered. can use [0] as having only one such node.
@@ -147,13 +109,15 @@
                             todo_list = todo_node.todo_list
                         );
         visit n;
-
+    }
+    else{
+        print("Closing");
     }
 }
 :walker:chat:can:chat_session{
 
         query() spawn here;
-        self.new_chat =False;
+        
         end = here;
         end ++> (end := router());
         end ++> RAG();
