@@ -4,13 +4,18 @@ import:py re;
 import:py json;
 import:py from mtllm.llms, Groq;
 import:jac gui;
+import:py streamlit as st;
 
 glob llm = Groq(model_name = "llama3-8b-8192");
 glob state = 0;
 can main() {
     
     :g: state;
-    gui.start();
+    if (gui.start()){
+        state = 1;
+        print(state);
+    }
+    
     if (state == 0)
     {
     create_graph(   user_data={ "age": 20,
@@ -21,12 +26,24 @@ can main() {
                                     "Buy Bread",
                                     "Have pizza for dinner"]
                     ) spawn root;
-    state = 1;
+        state = 2;
+        chat() spawn [root-->](`?user)[0];
+    }
+    elif(state == 1)
+    {
+        chat() spawn [root-->](`?user)[0];
+        state = 2;
     }
     else{
-        query() spawn [[root -->](`?user)[0] -->](`?session)[0];
+        
+        query() spawn [[root -->](`?user)[0] -->](`?session)[-1];
+        
+        
     }
 }
+
+
+
 node user{
     has user_name:string="user";
 }
@@ -38,7 +55,6 @@ walker query {
     has inquiry_by_user: string = '';
     has user_query : dict={"role":'',
                             "content":''}; 
-    has chat_file_name:string = 'chat';
     has query_state:int = 0;
     has user_data: 'data about the health status of the user' :dict={};
     has todo_list: 'The tasks to be done by the user in the future.' :list=[];
@@ -52,7 +68,7 @@ This should also include the chat history. Can have multiple chat sessions.
 node session{
     has session_id : string = '';
     has chat_history : list = [];
-    #has chat_file_name:string = 'chat';
+    has chat_file_name:string = 'chat';
     #has file:obj;
     has user_data : dict = {}; # User data such as habits, heart rate etc.
     has todo_list : list = []; # List of things to do by the user.

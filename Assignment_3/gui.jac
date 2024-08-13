@@ -4,6 +4,10 @@ import:py from PIL, Image;
 can start() {
     
     st.title("Assitant");
+    if st.button('start new chat'){
+        return True;
+    }
+    return False;
 }
 
 can chat_interface(query_walker:walker,session:node){

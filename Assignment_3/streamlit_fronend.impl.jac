@@ -9,7 +9,7 @@
     #print("At QA");
     self.answer = self.chat_llm(user_data=here.user_data,query=here.inquiry_by_user);
     gui.display_response(self.answer);
-    print(self.answer);
+
     here.user_query["role"] = "assistant";
     here.user_query["content"] = self.answer;
 
@@ -24,7 +24,7 @@
     #print("At TODO");
     self.answer = self.chat_llm(todo_list=here.todo_list,query=here.inquiry_by_user);
     gui.display_response(self.answer);
-    print(self.answer);
+  
     here.user_query["role"] = "assistant";
     here.user_query["content"] = self.answer;
 
@@ -47,24 +47,22 @@
         here.chat_history = [];
         
     }
+    
     if (here.query_state == 0)
     {
-        print(here.inquiry_by_user);
-        print(self.chat_history);
+     
         if (len(here.inquiry_by_user) > 0)
         {
             print(self.session_id);
-            #file = open(here.chat_file_name+str(here.session_id)+'.json', 'a');
-            #json.dump({"role":"user","content" : here.inquiry_by_user}, file, indent=4);
-            #file.close();
+            
             self.chat_history.append({"role":"user","content" : here.inquiry_by_user});
-            if here.inquiry_by_user != "x"{
-                visit [-->];
-            }
-            else{
-                print("going out!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                self.end_seesion();
-            }
+            self.end_seesion();
+            visit [-->];
+            
+        
+                
+                
+            
         } 
         here.query_state  = 1;
     }
@@ -76,11 +74,10 @@
 }
 
 :node:session:can:end_seesion{
-    file = open(here.chat_file_name+str(here.session_id)+".txt", 'a');
-    for i in self.chat_history{
-        file.write(i[0]+":"+i[1] + '\n');
-    }
+    file = open(self.chat_file_name+str(self.session_id)+'.json', 'w');
+    json.dump(self.chat_history, file, indent=4);
     file.close();
+    
 }
 :node:router:can:direct{
     if (len(here.inquiry_by_user)>0)
@@ -124,16 +121,16 @@
 }
 
 :walker:create_graph:can:generate_graph{
-    print("hereee");
+
     end = here; # Assign the current root node (here) to end
     end ++> (end := user()); # Create a user node and connect it to the end node. Assign the new user node to the end.
     end ++> data(user_data = self.user_data); # Create a data node with the user data and connect it to the end node.
     end ++> todo(todo_list = self.todo_list); # Create a todo node with the todo list and connect it to the end node.
-    chat() spawn [-->](`?user)[0]; # Spawn the chat walker with the user node.
+    #chat() spawn [-->](`?user)[0]; # Spawn the chat walker with the user node.
 }
 
 :walker:chat:can:create_session{
-    print(self.new_chat);
+   
     if (self.new_chat)
     {
         # Telescope into the nodes connected to the user node without walking.
