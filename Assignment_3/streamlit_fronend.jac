@@ -8,6 +8,7 @@ import:py streamlit as st;
 
 glob llm = Groq(model_name = "llama3-8b-8192");
 glob state = 0;
+
 can main() {
     
     :g: state;
@@ -118,9 +119,12 @@ walker create_graph{
     can generate_graph with `root entry;
 }
 
+
+
 node router {
     has match:obj =  re.search(r'(@\w+)\s(.*)', '');
     can direct with query entry;
+
 }
 node RAG {
     has answer:string = '';

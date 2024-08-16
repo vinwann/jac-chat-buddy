@@ -1,9 +1,58 @@
 import:py random;
 import:py uuid;
 import:py re;
+import:py json;
 import:py from mtllm.llms, Groq;
+import:jac gui;
+import:py streamlit as st;
 
 glob llm = Groq(model_name = "llama3-8b-8192");
+glob state = 0;
+enum task_type {
+    RAG_TYPE : 'Need to use Retrivable information in specific medical articles' = "RAG",
+    QA_TYPE : 'Need to use given user information' = "user_qa",
+    TODO_TYPE : 'Need to use the todo list of the user' = "todo"
+}
+glob router_examples: 'Examples of routing of a query': dict[str, task_type] = {
+    'When is my next check up?': task_type.TODO_TYPE,
+    'How healthy am I?': task_type.QA_TYPE,
+    'What are the symptoms of low blood pressure?': task_type.RAG_TYPE
+};
+can main() {
+    
+    :g: state;
+    if (gui.start()){
+        state = 1;
+        print(state);
+    }
+    
+    if (state == 0)
+    {
+    create_graph(   user_data={ "age": 20,
+                                    "Pressure": (120, 80),
+                                    "Married": False
+                                },
+                        todo_list=["Do heart surgery",
+                                    "Buy Bread",
+                                    "Have pizza for dinner"]
+                    ) spawn root;
+        state = 2;
+        chat() spawn [root-->](`?user)[0];
+    }
+    elif(state == 1)
+    {
+        chat() spawn [root-->](`?user)[0];
+        state = 2;
+    }
+    else{
+        
+        query() spawn [[root -->](`?user)[0] -->](`?session)[-1];
+        
+        
+    }
+}
+
+
 
 node user{
     has user_name:string="user";
@@ -12,8 +61,11 @@ node user{
 walker query {
     #can go_to_router with session entry;
     has session_id : string =  '';
+    has just_init :bool = True;
     has inquiry_by_user: string = '';
-    has user_query : list=[]; 
+    has user_query : dict={"role":'',
+                            "content":''}; 
+    has query_state:int = 0;
     has user_data: 'data about the health status of the user' :dict={};
     has todo_list: 'The tasks to be done by the user in the future.' :list=[];
 
@@ -34,6 +86,7 @@ node session{
     can end_seesion();
     #can seve_chat with query exit;
 }
+
 
 '''
 Consists of user data such as age, pressure, married status.
@@ -62,7 +115,7 @@ The create_session ability:
     - Spawns the chat session with the session id.
 '''
 walker chat{
-    
+    has new_chat : bool = True;
     can create_session with user entry;
     can chat_session with session entry;
 }
@@ -76,8 +129,13 @@ walker create_graph{
 }
 
 node router {
-    has match:obj =  re.search(r'(@\w+)\s(.*)', '');
+    #has match:obj =  re.search(r'(@\w+)\s(.*)', '');
     can direct with query entry;
+     can 'route the query to the appropriate task type'
+    router_with_llm(query:'Query from the user to be routed.':str,
+                    todo_list:'The tasks to be done by the user in the future.':list,
+                    user_data:'data about the health status of the user.':dict) -> task_type
+                                        by llm(method="Reason", temperature=0.0, incl_info=(router_examples));
 }
 node RAG {
     has answer:string = '';
@@ -88,22 +146,25 @@ node user_QA{
     can print_output with query entry;
     can 'You are a personal Assistant. Give a response based on the query using my todo list.'
     chat_llm(user_data:'data about the user':list,
-             query:'The question the user has.':str) -> 'response':str by llm();
+             query:'The question the user has.':str) -> 'response':str by llm(temperature=0.7, max_tokens=1024);
 }
 node user_TODO{
     has answer:string = '';
     can print_output with query entry;
     can 'You are a Health Assistant. Give a response based on the query using my todo list.'
     chat_llm(todo_list:'data about the health status of the user':list,
-             query:'The tasks to be done by the user in the future.':str) -> 'response':str by llm();
+             query:'The tasks to be done by the user in the future.':str) -> 'response':str by llm(temperature=0.7, max_tokens=1024);
 }
-with entry {
-    create_graph(   user_data={ "age": 20,
-                                "Pressure": (120, 80),
-                                "Married": False
-                            },
-                     todo_list=["Do heart surgery",
-                                "Buy Bread",
-                                "Have pizza for dinner"]
-                ) spawn root;
-}
+
+
+
+
+
+#with entry {
+#    if __name__ == "__main__"{
+#        main();
+#    }
+    
+#}
+    
+    

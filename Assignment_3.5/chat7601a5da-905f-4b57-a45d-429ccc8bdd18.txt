@@ -1,1 +1,0 @@
-@QA my age?:You are 20 years old.
