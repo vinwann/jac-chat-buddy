@@ -356,7 +356,7 @@ can main() {
 }
 
 :node:RAG_chat:can:run_RAG {
-    print('routed --> RAG');
+    print('routed --> RAG'                                                            );
 
     with st.chat_message("assistant"){
         response = self.chat_llm(

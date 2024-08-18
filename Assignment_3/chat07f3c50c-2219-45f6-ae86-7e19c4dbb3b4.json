@@ -9,14 +9,6 @@
     },
     {
         "role": "user",
-        "content": "sddas"
-    },
-    {
-        "role": "assistant",
-        "content": "Kindly add a routing method by using @ in the start of your question\nTo visit TODO : @TODO\nTo visit RAG : @RAG\nTo visit QA : @QA"
-    },
-    {
-        "role": "user",
-        "content": "dwa"
+        "content": "@QA hi"
     }
 ]

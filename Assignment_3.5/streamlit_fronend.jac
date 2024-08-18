@@ -5,7 +5,9 @@ import:py json;
 import:py from mtllm.llms, Groq;
 import:jac gui;
 import:py streamlit as st;
+import:py from db_service,TinyDBService;
 
+glob chat_meta_db = TinyDBService('meta');
 glob llm = Groq(model_name = "llama3-8b-8192");
 glob state = 0;
 enum task_type {
@@ -21,9 +23,9 @@ glob router_examples: 'Examples of routing of a query': dict[str, task_type] = {
 can main() {
     
     :g: state;
+    
     if (gui.start()){
-        state = 1;
-        print(state);
+        state = 1;   
     }
     
     if (state == 0)
@@ -45,7 +47,6 @@ can main() {
         state = 2;
     }
     else{
-        
         query() spawn [[root -->](`?user)[0] -->](`?session)[-1];
         
         
@@ -79,12 +80,10 @@ node session{
     has session_id : string = '';
     has chat_history : list = [];
     has chat_file_name:string = 'chat';
-    #has file:obj;
+    has tinydb_service:obj ='';
     has user_data : dict = {}; # User data such as habits, heart rate etc.
     has todo_list : list = []; # List of things to do by the user.
     can send_query_to_router with query entry;
-    can end_seesion();
-    #can seve_chat with query exit;
 }
 
 
@@ -157,14 +156,4 @@ node user_TODO{
 }
 
 
-
-
-
-#with entry {
-#    if __name__ == "__main__"{
-#        main();
-#    }
-    
-#}
-    
     
