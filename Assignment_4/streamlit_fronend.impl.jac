@@ -1,4 +1,13 @@
 :node:RAG:can:print_output{
+    self.answer =self.chat_llm(
+            todo_list=here.todo_list,
+            user_data=here.user_data,
+            query=here.inquiry_by_user,
+            retrived_context=RagEngine.get_from_chroma(query=here.inquiry_by_user)
+        );
+    gui.display_response(self.answer);
+    here.user_query["role"] = "assistant";
+    here.user_query["content"] = self.answer;
     here.inquiry_by_user = '';
     visit [<--];
 }
@@ -32,7 +41,6 @@
         here.chat_history = [];
         
     }
-    print("here.query_state ",here.query_state);
     if (here.query_state == 0)
     {
      
